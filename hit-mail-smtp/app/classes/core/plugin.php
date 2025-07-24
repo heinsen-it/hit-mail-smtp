@@ -172,4 +172,49 @@ class plugin {
         update_option('HITMAILSMTP_options', $options);
     }
 
+
+    /**
+     * Zeigt Admin-Notice für Plugin-Abhängigkeiten
+     */
+    public function show_dependency_notice() {
+        // Nur anzeigen wenn das aktuelle Plugin aktiv ist aber die Abhängigkeit fehlt
+        if (is_plugin_active(HITMAILSMTP_PLUGIN_BASENAME) && !$this->is_required_plugin_active()) {
+            ?>
+            <div class="notice notice-error is-dismissible">
+                <p>
+                    <strong><?php echo $this->plugin_name; ?>:</strong>
+                    Das erforderliche Plugin "<?php echo $this->required_plugin['name']; ?>" ist nicht aktiv.
+                    Einige Funktionen sind möglicherweise nicht verfügbar.
+                </p>
+                <p>
+                    <a href="<?php echo admin_url('plugins.php'); ?>" class="button button-primary">
+                        Plugins verwalten
+                    </a>
+                </p>
+            </div>
+            <?php
+        }
+    }
+
+
+    /**
+     * Überprüft ob das erforderliche Plugin aktiv ist
+     *
+     * @return bool
+     */
+    private function is_required_plugin_active() {
+        return is_plugin_active($this->required_plugin['main_file']);
+    }
+
+    /**
+     * Überprüft ob das erforderliche Plugin installiert ist
+     *
+     * @return bool
+     */
+    private function is_required_plugin_installed() {
+        $plugin_path = WP_PLUGIN_DIR . '/' . $this->required_plugin['main_file'];
+        return file_exists($plugin_path);
+    }
+
+
 }
