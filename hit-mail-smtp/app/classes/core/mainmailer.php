@@ -18,7 +18,7 @@ class MainMailer{
      */
     private ?string $host;
 
-    private ?bool $SMPTAuth;
+    private ?bool $SMTPAuth;
     /**
      * @var string|null
      */
@@ -65,12 +65,30 @@ class MainMailer{
     private ?string $message;
 
 
+    public function init(){
+        // Hook für WordPress PHPMailer
+        add_action('phpmailer_init', array($this, 'configure_phpmailer'));
+    }
+
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+
+    public function loadConfig() {
+        $this->host = get_option('smtp_host');
+        $this->username = get_option('smtp_username');
+        // etc.
+    }
+
     /**
      *
      */
     public function __construct() {
         $this->host = $this->setHost(null);
-
 
   }
 
@@ -104,12 +122,12 @@ class MainMailer{
       $this->username = $username;
   }
 
-  public function getSMPTAuth() : ?bool {
-        return $this->SMPTAuth;
+  public function getSMTPAuth() : ?bool {
+        return $this->SMTPAuth;
   }
 
-  public function setSMPTAuth(?bool $SMPTAuth) : void {
-        $this->SMPTAuth = $SMPTAuth;
+  public function setSMPTAuth(?bool $SMTPAuth) : void {
+        $this->SMTPAuth = $SMTPAuth;
   }
 
     /**
