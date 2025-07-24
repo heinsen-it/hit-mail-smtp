@@ -106,8 +106,14 @@ class plugin {
      * Wird beim Aktivieren des Plugins ausgeführt
      */
     public function activate() {
+        // Überprüfung der Plugin-Abhängigkeiten
+        if (!$this->check_plugin_dependencies()) {
+            return false;
+        }
+
         // Aktivierungslogik hier
         flush_rewrite_rules();
+        return true;
     }
 
     /**
@@ -215,6 +221,34 @@ class plugin {
         $plugin_path = WP_PLUGIN_DIR . '/' . $this->required_plugin['main_file'];
         return file_exists($plugin_path);
     }
+
+
+    /**
+     * Zeigt Aktivierungsfehler an
+     *
+     * @param string $message
+     */
+    private function show_activation_error($message) {
+        // Plugin deaktivieren
+        deactivate_plugins(HITMAILSMTP_PLUGIN_BASENAME);
+
+        // Fehlermeldung anzeigen
+        wp_die(
+            sprintf(
+                '<h1>%s</h1><p>%s</p><p><strong>%s:</strong> %s</p><p><a href="%s">%s</a></p>',
+                'Plugin-Aktivierung fehlgeschlagen',
+                'Dieses Plugin benötigt das "' . $this->required_plugin['name'] . '" Plugin.',
+                'Fehler',
+                $message,
+                admin_url('plugins.php'),
+                'Zurück zu den Plugins'
+            ),
+            'Plugin-Abhängigkeit fehlt',
+            array('back_link' => true)
+        );
+    }
+
+
 
 
 }
