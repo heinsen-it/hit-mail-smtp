@@ -78,10 +78,18 @@ class MainMailer{
     }
 
 
-    public function loadConfig() {
-        $this->host = get_option('smtp_host');
-        $this->username = get_option('smtp_username');
-        // etc.
+    /**
+     * Lädt Konfiguration aus WordPress-Optionen
+     */
+    private function loadConfig() {
+        $this->host = get_option('mainmailer_smtp_host');
+        $this->SMTPAuth = (bool)get_option('mainmailer_smtp_auth', true);
+        $this->username = get_option('mainmailer_smtp_username');
+        $this->password = get_option('mainmailer_smtp_password');
+        $this->port = get_option('mainmailer_smtp_port', '587');
+        $this->secure = get_option('mainmailer_smtp_secure', 'tls');
+        $this->from_email = get_option('mainmailer_from_email');
+        $this->from_name = get_option('mainmailer_from_name');
     }
 
     /**
@@ -284,22 +292,59 @@ class MainMailer{
   }
 
 
+
+    public static function sendEmail($to, $subject, $message, $headers = []) {
+        $instance = self::getInstance();
+        $instance->loadConfig();
+
+        if (!$instance->isConfigured()) {
+            error_log('MainMailer: SMTP nicht konfiguriert');
+            return false;
+        }
+
+        // WordPress wp_mail nutzen (wird automatisch PHPMailer verwenden)
+        $instance->setTo($to);
+        $instance->setSubject($subject);
+        $instance->setMessage($message);
+
+        // phpmailer_init Hook registrieren falls noch nicht geschehen
+        if (!has_action('phpmailer_init', [__CLASS__, 'configure_phpmailer'])) {
+            add_action('phpmailer_init', [__CLASS__, 'configure_phpmailer']);
+        }
+
+        return wp_mail($to, $subject, $message, $headers);
+    }
+
     /**
      * @param $phpmailer
      * @return void
      */
-    public static  function send_smtp_email($phpmailer ) {
+    public static function configure_phpmailer($phpmailer) {
+        $instance = self::getInstance();
+        $instance->loadConfig(); // Lade Konfiguration aus WordPress-Optionen
 
-        self::$instance = new MainMailer();
+        if (!$instance->isConfigured()) {
+            return; // Keine SMTP-Konfiguration vorhanden
+        }
+
         $phpmailer->isSMTP();
-        $phpmailer->Host       = self::$instance->getHost();
-        $phpmailer->SMTPAuth   = self::$instance->getSMTPAuth();
-        $phpmailer->Port       = self::$instance->getPort();
-        $phpmailer->Username   = self::$instance->getUsername();
-        $phpmailer->Password   = self::$instance->getPassword();
-        $phpmailer->SMTPSecure = self::$instance->getSecure();
-        $phpmailer->From       = self::$instance->getFrom();
-        $phpmailer->FromName   = self::$instance->getFromName();
+        $phpmailer->Host       = $instance->getHost();
+        $phpmailer->SMTPAuth   = $instance->getSMTPAuth(); // Typo korrigiert
+        $phpmailer->Port       = $instance->getPort();
+        $phpmailer->Username   = $instance->getUsername();
+        $phpmailer->Password   = $instance->getPassword();
+        $phpmailer->SMTPSecure = $instance->getSecure();
+        $phpmailer->setFrom($instance->getFromEmail(), $instance->getFromName());
+    }
+
+    /**
+     * Prüft ob SMTP korrekt konfiguriert ist
+     */
+    private function isConfigured() {
+        return !empty($this->host) &&
+            !empty($this->username) &&
+            !empty($this->password) &&
+            !empty($this->from_email);
     }
 
 }
