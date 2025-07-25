@@ -178,6 +178,42 @@ class plugin {
         update_option('HITMAILSMTP_options', $options);
     }
 
+    /**
+     * Testcase für Installation des erforderlichen Plugin & das vollautomatisch
+     *
+     * @return bool
+     */
+    private function install_required_plugin() {
+        // WordPress Plugin-Installer laden
+        require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+
+        // Skin für silent installation
+        $skin = new \WP_Ajax_Upgrader_Skin();
+        $upgrader = new \Plugin_Upgrader($skin);
+
+        try {
+            // Plugin herunterladen und installieren
+            $result = $upgrader->install($this->required_plugin['download_url']);
+
+            if (is_wp_error($result)) {
+                $this->show_activation_error('Fehler beim Installieren des erforderlichen Plugins: ' . $result->get_error_message());
+                return false;
+            }
+
+            if ($result === false) {
+                $this->show_activation_error('Installation des erforderlichen Plugins fehlgeschlagen.');
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            $this->show_activation_error('Fehler beim Installieren des erforderlichen Plugins: ' . $e->getMessage());
+            return false;
+        }
+    }
 
     /**
      * Zeigt Admin-Notice für Plugin-Abhängigkeiten
