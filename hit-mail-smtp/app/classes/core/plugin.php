@@ -41,6 +41,19 @@ class plugin {
      */
     private $logger = null;
 
+    /**
+     * Erforderliches Plugin
+     *
+     * @var array
+     */
+    private $required_plugin = array(
+        'name' => 'xxx',
+        'slug' => 'xxx',
+        'main_file' => 'path/mainfile.php',
+        'download_url' => 'download_url',
+        'version' => '1.0.0'
+    );
+
 
     /**
      * Konstruktor
